@@ -4,6 +4,7 @@ try:
 except ImportError:
     from urllib import parse as urlparse # python3 support
 from class_based_auth_views.utils import default_redirect
+from django import VERSION as django_version
 from django.contrib import auth
 from django.contrib.auth import REDIRECT_FIELD_NAME, login
 from django.contrib.auth.forms import AuthenticationForm
@@ -94,13 +95,19 @@ class LogoutView(TemplateResponseMixin, View):
     redirect_field_name = "next"
 
     def get(self, *args, **kwargs):
-        if not self.request.user.is_authenticated():
+        authenticated = \
+            self.request.user.is_authenticated if django_version >= (1, 10) \
+            else self.request.user.is_authenticated()
+        if not authenticated:
             return redirect(self.get_redirect_url())
         context = self.get_context_data()
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        if self.request.user.is_authenticated():
+        authenticated = \
+            self.request.user.is_authenticated if django_version >= (1, 10) \
+            else self.request.user.is_authenticated()
+        if authenticated:
             auth.logout(self.request)
         return redirect(self.get_redirect_url())
 
